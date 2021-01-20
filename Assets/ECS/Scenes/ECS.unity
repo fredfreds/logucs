@@ -326,7 +326,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 7041394142588224992, guid: 08a1b9fe8cfe0e946976587364e72dba, type: 3}
-  Count: 10000
+  Count: 20000
 --- !u!4 &1617417787
 Transform:
   m_ObjectHideFlags: 0
