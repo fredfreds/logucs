@@ -321,13 +321,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1617417785}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: be211ad219456974b9581b71e4e795f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 7041394142588224992, guid: 9b2cad8d66764df4f8362d3c125f670a, type: 3}
-  Count: 5000
+  Count: 10000
 --- !u!4 &1617417787
 Transform:
   m_ObjectHideFlags: 0
@@ -349,11 +349,11 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1617417785}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e4d1565dadf419f4a9063b273d03729d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 7041394142588224992, guid: 08a1b9fe8cfe0e946976587364e72dba, type: 3}
   Speed: 1
-  Count: 5000
+  Count: 10000
