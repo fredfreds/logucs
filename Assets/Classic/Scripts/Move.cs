@@ -14,11 +14,13 @@ namespace Classic
 
             if (transform.position.z > 50)
             {
-                Speed *= -1;
+                transform.position =
+                    new Vector3(transform.position.x, 0, transform.position.z * -1);
             }
             else if (transform.position.z < -50)
             {
-                Speed *= -1;
+                transform.position =
+                    new Vector3(transform.position.x, 0, transform.position.z * -1);
             }
         }
     }
