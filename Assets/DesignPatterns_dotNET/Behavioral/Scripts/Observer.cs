@@ -6,65 +6,10 @@ using UnityEngine.UI;
 
 namespace DesignPatterns_dotNET.Behavioral
 {
-    public interface IObserver<T>
-    {
-        void Update(object unit, T info);
-    }
-
-    public class Notification<T> : IObserver<T>
-    {
-        private Action<object, T> action;
-
-        public Notification(Action<object, T> action)
-        {
-            this.action = action;
-        }
-
-        public void Update(object sender, T info)
-        {
-            action(sender, info);
-        }
-    }
-
-    public class CastNotifier<T>
-    {
-        private List<IObserver<T>> observersList;
-
-        private CastNotifier(IObserver<T> observer)
-        {
-            observersList = new List<IObserver<T>>();
-            observersList.Add(observer);
-        }
-
-        private CastNotifier(CastNotifier<T> notifier, IObserver<T> observer)
-        {
-            observersList = new List<IObserver<T>>(notifier.observersList);
-            observersList.Add(observer);
-        }
-
-        public void Notify(object sender, T data)
-        {
-            foreach (IObserver<T> observer in observersList)
-            {
-                observer.Update(sender, data);
-            }
-        }
-
-        public static CastNotifier<T> operator + (CastNotifier<T> notifier, IObserver<T> observer)
-        {
-            if(notifier == null)
-            {
-                return new CastNotifier<T>(observer);
-            }
-
-            return new CastNotifier<T>(notifier, observer);
-        }
-    }
-
     public class Unit
     {
-        public CastNotifier<string> doSomething;
-        public CastNotifier<Tuple<string, string>> doAfterSomething;
+        public event EventHandler<string> doSomething;
+        public event EventHandler<Tuple<string, string>> doAfterSomething;
 
         public string Name { get; private set; }
 
@@ -86,7 +31,7 @@ namespace DesignPatterns_dotNET.Behavioral
         {
             if(doSomething != null)
             {
-                doSomething.Notify(this, info);
+                doSomething(this, info);
             }
         }
 
@@ -94,21 +39,13 @@ namespace DesignPatterns_dotNET.Behavioral
         {
             if (doAfterSomething != null)
             {
-                doAfterSomething.Notify(this, Tuple.Create(info, n));
+                doAfterSomething(this, Tuple.Create(info, n));
             }
         }
     }
 
     public class UI
     {
-        public readonly IObserver<string> AfterDoSmth;
-
-        public UI()
-        {
-            AfterDoSmth = new Notification<string>(
-                (sender, data) => AfterDo(sender, data));
-        }
-
         public void AfterDo(object sender, string info)
         {
             Debug.Log($"UI Update {sender.ToString()} with {info}");
@@ -117,16 +54,6 @@ namespace DesignPatterns_dotNET.Behavioral
 
     public class Log 
     {
-        public readonly IObserver<string> AfterDoSmth;
-        public readonly IObserver<Tuple<string, string>> AfterDoSmthMore;
-
-        public Log()
-        {
-            AfterDoSmth = new Notification<string>((sender, data) => AfterDo(sender, data));
-            AfterDoSmthMore = new Notification<Tuple<string, string>>((sender, data) =>
-            AfterDoMore(sender, data));
-        }
-
         public void AfterDo(object sender, string info)
         {
             Debug.Log($"Log Update {sender.ToString()} with {info}");
@@ -154,9 +81,9 @@ namespace DesignPatterns_dotNET.Behavioral
 
         private void Run()
         {
-            unit.doSomething += ui.AfterDoSmth;
-            unit.doSomething += log.AfterDoSmth;
-            unit.doAfterSomething += log.AfterDoSmthMore;
+            unit.doSomething += ui.AfterDo;
+            unit.doSomething += log.AfterDo;
+            unit.doAfterSomething += log.AfterDoMore;
             unit.Do("Unit 1", infoIF.text);
         }
 
