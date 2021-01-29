@@ -1,68 +1,123 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DesignPatterns_dotNET.Behavioral
 {
-    public interface IUnit
+    public interface IObserver<T>
     {
-        void Add(IObserver observer);
-        void Remove(IObserver observer);
-        void Notify(string info);
-        string Name { get; }
+        void Update(object unit, T info);
     }
 
-    public interface IObserver
+    public class Notification<T> : IObserver<T>
     {
-        void Update(IUnit unit, string info);
+        private Action<object, T> action;
+
+        public Notification(Action<object, T> action)
+        {
+            this.action = action;
+        }
+
+        public void Update(object sender, T info)
+        {
+            action(sender, info);
+        }
     }
 
-    public class Unit : IUnit
+    public class CastNotifier<T>
     {
-        public string Name { get; private set; }
+        private List<IObserver<T>> observersList;
 
-        private List<IObserver> observers = new List<IObserver>();
-
-        public void Add(IObserver observer)
+        public CastNotifier(IEnumerable<IObserver<T>> observers)
         {
-            observers.Add(observer);
+            observersList = new List<IObserver<T>>(observers);
         }
 
-        public void Remove(IObserver observer)
+        public void Notify(object sender, T data)
         {
-            observers.Remove(observer);
-        }
-
-        public void Notify(string info)
-        {
-            foreach (var observer in observers)
+            foreach (IObserver<T> observer in observersList)
             {
-                observer.Update(this, info);
+                observer.Update(sender, data);
             }
         }
+    }
+
+    public class Unit
+    {
+        public CastNotifier<string> doSomething;
+        public CastNotifier<Tuple<string, string>> doAfterSomething;
+
+        public string Name { get; private set; }
 
         public void Do(string n, string info)
         {
             Name = n;
             Debug.Log($"Do {info}");
-            Notify(info);
+            OnDoSomething(info);
+        }
+
+        public void DoAfter(string n, string info)
+        {
+            Name += info;
+            Debug.Log($"Do After {info}");
+            OnDoAfterSomething(info, Name);
+        }
+
+        private void OnDoSomething(string info)
+        {
+            if(doSomething != null)
+            {
+                doSomething.Notify(this, info);
+            }
+        }
+
+        private void OnDoAfterSomething(string info, string n)
+        {
+            if (doAfterSomething != null)
+            {
+                doAfterSomething.Notify(this, Tuple.Create(info, n));
+            }
         }
     }
 
-    public class UI : IObserver
+    public class UI
     {
-        public void Update(IUnit unit, string info)
+        public readonly IObserver<string> AfterDoSmth;
+
+        public UI()
         {
-            Debug.Log($"UI Update {unit.Name} with {info}");
+            AfterDoSmth = new Notification<string>(
+                (sender, data) => AfterDo(sender, data));
+        }
+
+        public void AfterDo(object sender, string info)
+        {
+            Debug.Log($"UI Update {sender.ToString()} with {info}");
         }
     }
 
-    public class Log : IObserver
+    public class Log 
     {
-        public void Update(IUnit unit, string info)
+        public readonly IObserver<string> AfterDoSmth;
+        public readonly IObserver<Tuple<string, string>> AfterDoSmthMore;
+
+        public Log()
         {
-            Debug.Log($"Log Update {unit.Name} with {info}");
+            AfterDoSmth = new Notification<string>((sender, data) => AfterDo(sender, data));
+            AfterDoSmthMore = new Notification<Tuple<string, string>>((sender, data) =>
+            AfterDoMore(sender, data));
+        }
+
+        public void AfterDo(object sender, string info)
+        {
+            Debug.Log($"Log Update {sender.ToString()} with {info}");
+        }
+
+        public void AfterDoMore(object sender, Tuple<string, string> info)
+        {
+            Debug.Log($"Log Update {sender.ToString()} with {info.Item1}, {info.Item2}");
         }
     }
 
@@ -82,11 +137,16 @@ namespace DesignPatterns_dotNET.Behavioral
 
         private void Run()
         {
-            unit.Add(ui);
-            unit.Add(log);
+            unit.doSomething = new CastNotifier<string>(new IObserver<string>[]
+            {
+                ui.AfterDoSmth,
+                log.AfterDoSmth
+            });
+            unit.doAfterSomething = new CastNotifier<Tuple<string, string>>(new IObserver<Tuple<string, string>>[]
+                {
+                    log.AfterDoSmthMore
+                });
             unit.Do("Unit 1", infoIF.text);
-            unit.Remove(ui);
-            unit.Remove(log);
         }
 
         private void OnDisable()
