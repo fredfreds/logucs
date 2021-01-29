@@ -30,9 +30,16 @@ namespace DesignPatterns_dotNET.Behavioral
     {
         private List<IObserver<T>> observersList;
 
-        public CastNotifier(IEnumerable<IObserver<T>> observers)
+        private CastNotifier(IObserver<T> observer)
         {
-            observersList = new List<IObserver<T>>(observers);
+            observersList = new List<IObserver<T>>();
+            observersList.Add(observer);
+        }
+
+        private CastNotifier(CastNotifier<T> notifier, IObserver<T> observer)
+        {
+            observersList = new List<IObserver<T>>(notifier.observersList);
+            observersList.Add(observer);
         }
 
         public void Notify(object sender, T data)
@@ -41,6 +48,16 @@ namespace DesignPatterns_dotNET.Behavioral
             {
                 observer.Update(sender, data);
             }
+        }
+
+        public static CastNotifier<T> operator + (CastNotifier<T> notifier, IObserver<T> observer)
+        {
+            if(notifier == null)
+            {
+                return new CastNotifier<T>(observer);
+            }
+
+            return new CastNotifier<T>(notifier, observer);
         }
     }
 
@@ -137,15 +154,9 @@ namespace DesignPatterns_dotNET.Behavioral
 
         private void Run()
         {
-            unit.doSomething = new CastNotifier<string>(new IObserver<string>[]
-            {
-                ui.AfterDoSmth,
-                log.AfterDoSmth
-            });
-            unit.doAfterSomething = new CastNotifier<Tuple<string, string>>(new IObserver<Tuple<string, string>>[]
-                {
-                    log.AfterDoSmthMore
-                });
+            unit.doSomething += ui.AfterDoSmth;
+            unit.doSomething += log.AfterDoSmth;
+            unit.doAfterSomething += log.AfterDoSmthMore;
             unit.Do("Unit 1", infoIF.text);
         }
 
