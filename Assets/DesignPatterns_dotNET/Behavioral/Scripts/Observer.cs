@@ -8,60 +8,39 @@ namespace DesignPatterns_dotNET.Behavioral
 {
     public class Unit
     {
-        public event EventHandler<string> doSomething;
-        public event EventHandler<Tuple<string, string>> doAfterSomething;
+        public event EventHandler<string> Attack;
 
         public string Name { get; private set; }
 
-        public void Do(string n, string info)
+        public void DoAttack(string n, string info)
         {
             Name = n;
-            Debug.Log($"Do {info}");
-            OnDoSomething(info);
+            Debug.Log($"Attack {info}");
+            OnDoAttack(info);
         }
 
-        public void DoAfter(string n, string info)
+        private void OnDoAttack(string info)
         {
-            Name += info;
-            Debug.Log($"Do After {info}");
-            OnDoAfterSomething(info, Name);
-        }
-
-        private void OnDoSomething(string info)
-        {
-            if(doSomething != null)
+            if(Attack != null)
             {
-                doSomething(this, info);
-            }
-        }
-
-        private void OnDoAfterSomething(string info, string n)
-        {
-            if (doAfterSomething != null)
-            {
-                doAfterSomething(this, Tuple.Create(info, n));
+                Attack(this, info);
             }
         }
     }
 
     public class UI
     {
-        public void AfterDo(object sender, string info)
+        public void AfterAttack(object sender, string info)
         {
-            Debug.Log($"UI Update {sender.ToString()} with {info}");
+            Debug.Log($"UI Update {sender as Unit} with {info}");
         }
     }
 
     public class Log 
     {
-        public void AfterDo(object sender, string info)
+        public void AfterAttack(object sender, string info)
         {
-            Debug.Log($"Log Update {sender.ToString()} with {info}");
-        }
-
-        public void AfterDoMore(object sender, Tuple<string, string> info)
-        {
-            Debug.Log($"Log Update {sender.ToString()} with {info.Item1}, {info.Item2}");
+            Debug.Log($"Log Update {sender} with {info}");
         }
     }
 
@@ -81,10 +60,13 @@ namespace DesignPatterns_dotNET.Behavioral
 
         private void Run()
         {
-            unit.doSomething += ui.AfterDo;
-            unit.doSomething += log.AfterDo;
-            unit.doAfterSomething += log.AfterDoMore;
-            unit.Do("Unit 1", infoIF.text);
+            unit.Attack += ui.AfterAttack;
+            unit.Attack += log.AfterAttack;
+
+            unit.DoAttack("Unit 1", infoIF.text);
+
+            unit.Attack -= ui.AfterAttack;
+            unit.Attack -= log.AfterAttack;
         }
 
         private void OnDisable()
