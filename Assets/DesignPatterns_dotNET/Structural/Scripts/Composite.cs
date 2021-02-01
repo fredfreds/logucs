@@ -6,7 +6,52 @@ using UnityEngine.UI;
 
 namespace DesignPatterns_dotNET.Structural
 {
-    public class Worker
+    public interface IWorker
+    {
+        double Work(double machines);
+        double Estimate(double machines);
+    }
+
+    public class WorkingCompany : IWorker
+    {
+        private IEnumerable<IWorker> workers;
+
+        public WorkingCompany(IEnumerable<IWorker> workers)
+        {
+            this.workers = workers;
+        }
+
+        public double Estimate(double machines)
+        {
+            return machines / GetWorkTime();
+        }
+
+        public double Work(double machines)
+        {
+            double totalWork = GetWorkTime();
+
+            double totalTime = workers.Select(worker => new
+            {
+                Worker = worker,
+                Speed = 1 / (double)worker.Estimate(1)
+            }).Select(record => new
+            {
+                Worker = record.Worker,
+                Machines = machines * record.Speed / totalWork
+            }).Select(record => record.Worker.Work(record.Machines)).Max();
+
+            return totalTime;
+        }
+
+        private double GetWorkTime()
+        {
+            return workers.Select(worker => worker.Estimate(1))
+                .Select(daysToComplete => 1 / (double)daysToComplete)
+                .Sum();
+        }
+    }
+
+    public class Worker : IWorker
     {
         private string name;
         private int daysToCompleteWork;
@@ -19,13 +64,14 @@ namespace DesignPatterns_dotNET.Structural
 
         public double Work(double totalMachines)
         {
-            double totalWork = totalMachines / daysToCompleteWork;
+            double totalWork = Estimate(totalMachines);
+
             Debug.Log($"{name} work for {totalMachines}, {daysToCompleteWork}");
 
             return totalWork;
         }
 
-        public int Estimate(int machines)
+        public double Estimate(double machines)
         {
             return machines * daysToCompleteWork;
         }
@@ -34,25 +80,19 @@ namespace DesignPatterns_dotNET.Structural
     public class Plant
     {
         private int totalMachines;
-        private IEnumerable<Worker> workers;
+        private IWorker worker;
 
-        public Plant(int totalMachines, IEnumerable<Worker> workers)
+        public Plant(int totalMachines, IWorker worker)
         {
             this.totalMachines = totalMachines;
-            this.workers = new List<Worker>(workers);
+            this.worker = worker;
         }
 
         public void StartWork()
         {
-            double totalWork = workers.Select(worker => worker.Estimate(1))
-                .Select(daysToComplete => 1 / (double)daysToComplete)
-                .Sum();
+            double time = worker.Work(totalMachines);
 
-            double totalTime = totalMachines / totalWork;
-
-            double total = workers.Select(worker => worker.Work(totalTime)).Sum();
-
-            Debug.Log($"All work = {total}");
+            Debug.Log($"All work = {totalMachines:0}, {time:0.00}");
         }
     }
 
@@ -70,12 +110,19 @@ namespace DesignPatterns_dotNET.Structural
 
         private void Run()
         {
-            plant = new Plant(14, new Worker[]
-            {
-                new Worker(4, "Fred1"),
-                new Worker(5, "Fred2"),
-                new Worker(3, "Fred3")
+            IWorker localWorkers = new WorkingCompany(new IWorker[] { 
+                new Worker(7, "Fred1"),
+                new Worker(5, "Fred2")
             });
+
+            IWorker mainWorkers = new WorkingCompany(new IWorker[] {
+                new Worker(4, "Fred3"),
+                new Worker(5, "Fred4"),
+                new Worker(3, "Fred5"),
+                localWorkers
+            });
+
+            plant = new Plant(14, mainWorkers);
 
             plant.StartWork();
         }
